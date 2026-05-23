@@ -66,7 +66,7 @@ save_current_conversation()
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
-st.sidebar.title("🤖 Chatbot")
+st.sidebar.title("🤖 Langgraph Chatbot")
 
 if st.sidebar.button("➕ New Chat", use_container_width=True):
     start_new_chat()
