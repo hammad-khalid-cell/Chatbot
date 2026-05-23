@@ -1,0 +1,6 @@
+# List your project dependencies here.
+# Install them using: .venv\Scripts\pip install -r requirements.txt
+#
+# Examples:
+# requests>=2.31.0
+# pydantic>=2.0
