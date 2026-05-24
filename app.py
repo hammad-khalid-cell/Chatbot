@@ -1,8 +1,9 @@
 import streamlit as st
-from backend import chatbot
+from backend import chatbot, retrieve_all_threads, retrieve_thread_messages
 from langchain_core.messages import HumanMessage
 import uuid
 from datetime import datetime
+
 
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -28,21 +29,23 @@ def get_conversation_title(messages):
 
 
 def load_conversation(tid):
+
     """Load a past conversation into the active session."""
-    if tid in st.session_state["all_conversations"]:
-        st.session_state["thread_id"] = tid
-        st.session_state["message_history"] = st.session_state["all_conversations"][tid]["messages"]
+    messages = retrieve_thread_messages(tid)
+
+    st.session_state["thread_id"] = tid
+    st.session_state["message_history"] = messages
 
 
-def save_current_conversation():
-    """Save the current conversation to all_conversations store."""
-    tid = st.session_state["thread_id"]
-    if st.session_state["message_history"]:
-        existing_timestamp = st.session_state["all_conversations"].get(tid, {}).get("timestamp")
-        st.session_state["all_conversations"][tid] = {
-            "messages": st.session_state["message_history"],
-            "timestamp": existing_timestamp or datetime.now().strftime("%b %d, %H:%M")
-        }
+# def save_current_conversation():
+#     """Save the current conversation to all_conversations store."""
+#     tid = st.session_state["thread_id"]
+#     if st.session_state["message_history"]:
+#         existing_timestamp = st.session_state["all_conversations"].get(tid, {}).get("timestamp")
+#         st.session_state["all_conversations"][tid] = {
+#             "messages": st.session_state["message_history"],
+#             "timestamp": existing_timestamp or datetime.now().strftime("%b %d, %H:%M")
+#         }
 
 
 def start_new_chat():
@@ -58,11 +61,12 @@ if "message_history" not in st.session_state:
 if "thread_id" not in st.session_state:
     st.session_state["thread_id"] = generate_thread_id()
 
-if "all_conversations" not in st.session_state:
-    st.session_state["all_conversations"] = {}
+# if "all_conversations" not in st.session_state:
+#     st.session_state["all_conversations"] = retrieve_all_threads()
+    
 
 # Auto-save current conversation on every rerun
-save_current_conversation()
+# save_current_conversation()
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -74,26 +78,34 @@ if st.sidebar.button("➕ New Chat", use_container_width=True):
 
 st.sidebar.divider()
 st.sidebar.subheader("💬 My Conversations")
+all_threads = retrieve_all_threads()
 
-if not st.session_state["all_conversations"]:
+
+if not all_threads:
+
     st.sidebar.caption("No conversations yet.")
+
 else:
-    sorted_convos = sorted(
-        st.session_state["all_conversations"].items(),
-        key=lambda x: x[1]["timestamp"],
-        reverse=True
-    )
 
-    for tid, convo in sorted_convos:
-        title = get_conversation_title(convo["messages"])
-        timestamp = convo["timestamp"]
+    for tid in all_threads:
+
+        messages = retrieve_thread_messages(tid)
+
+        title = get_conversation_title(messages)
+
         is_active = tid == st.session_state["thread_id"]
-        label = f"{'🟢 ' if is_active else ''}{title}\n{timestamp}"
 
-        if st.sidebar.button(label, key=f"convo_{tid}", use_container_width=True):
+        label = f"{'🟢 ' if is_active else ''}{title}"
+
+        if st.sidebar.button(
+            label,
+            key=f"convo_{tid}",
+            use_container_width=True
+        ):
+
             load_conversation(tid)
-            st.rerun()
 
+            st.rerun()
 
 # ── Main Chat Area ────────────────────────────────────────────────────────────
 for message in st.session_state["message_history"]:
@@ -135,5 +147,5 @@ if user_input:
         "content": ai_message
     })
 
-    save_current_conversation()
+    # save_current_conversation()
     st.rerun()
