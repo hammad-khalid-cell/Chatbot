@@ -5,3 +5,4 @@ langchain-groq
 langchain-openai
 streamlit
 python-dotenv
+langgraph-checkpoint-sqlite
